@@ -116,7 +116,7 @@ MonoBehaviour:
   attackRange: 4
   attackDamage: 25
   attackTimer: 2
-  frequency: 50
+  frequency: 20
   idTime: 1
   modelAnimator: {fileID: 1582991605295064758}
   idTrans: {fileID: 6952852260024310380}

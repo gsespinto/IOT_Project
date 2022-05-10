@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.Tracing;
 using System.IO;
+using IOT_Delegates;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.UI;
@@ -12,6 +13,7 @@ using TMPro;
 public class Player : MonoBehaviour
 {
   private const int SPACE = 10;
+  private const int MAX_PHOTOS = 20;
   
   private Enemy _currentEnemy = null;
   private bool _takingPhoto = false;
@@ -58,10 +60,20 @@ public class Player : MonoBehaviour
   private float _currentFrequency = 0.0f;
   private bool _isValidPhoto = false;
   private float _initialDetectDistance;
+  private string _currentPlaySession;
+  private int _currentPhoto = 0;
+  private Photo[] _photos = new Photo[MAX_PHOTOS];
+  private Enemy _lastPhotographedEnemy;
+  private int _photographedMonsters = 0;
+  public NoParamsDelegate OnValidPhoto;
   
   // Start is called before the first frame update
   void Start()
   {
+    _currentPlaySession = System.DateTime.Now.ToString();
+    _currentPlaySession = _currentPlaySession.Replace("/", "_");
+    _currentPlaySession = _currentPlaySession.Replace(":", "_");
+    
     _agentComponent = this.GetComponent<NavMeshAgent>();
     _inputComponent = this.GetComponent<InputComponent>();
     _healthComponent = this.GetComponent<HealthComponent>();
@@ -150,10 +162,8 @@ public class Player : MonoBehaviour
 
   void HandleFrequencyInput(int input)
   {
-    if (_currentFrequency == input)
-      return;
     _currentFrequency = input; // Mathf.Clamp(_currentFrequency + input, 0.0f, 1000.0f);
-    // Debug.Log("Current frequency: " + (int)_currentFrequency);
+    Debug.Log("Current frequency: " + (int)_currentFrequency);
   }
 
   void ToggleFlashLight(bool isOn)
@@ -193,20 +203,35 @@ public class Player : MonoBehaviour
 
   void TakePhoto()
   {
+    if (_currentEnemy)
+    {
+      if (_lastPhotographedEnemy != _currentEnemy && _isValidPhoto)
+      {
+        _photographedMonsters++;
+        _lastPhotographedEnemy = _currentEnemy;
+        OnValidPhoto?.Invoke();
+      }
+      
+      _currentEnemy.GetAttacked(_currentFrequency);
+    }
+
     RenderTexture.active = photoRenderTexture;
     // Read pixels
     Rect photoRect = new Rect(Vector2.zero, new Vector2(photoRenderTexture.width, photoRenderTexture.height));
     photoTex = new Texture2D(photoRenderTexture.width, photoRenderTexture.height);
     photoTex.ReadPixels(photoRect, 0, 0);
     photoTex.Apply();
- 
+
     //then Save To Disk as PNG
     byte[] bytes = photoTex.EncodeToPNG();
-    var dirPath = Application.dataPath + "/../SaveImages/";
+    var dirPath = Application.dataPath + "/../SaveImages/" + _currentPlaySession + "/";
     if(!Directory.Exists(dirPath)) {
       Directory.CreateDirectory(dirPath);
     }
-    File.WriteAllBytes(dirPath + "Image" + ".png", bytes);
+    
+    File.WriteAllBytes(dirPath + _currentPhoto + ".png", bytes);
+    _photos[_currentPhoto] = new Photo(Sprite.Create(photoTex, photoRect,new Vector2(0,0),1), _isValidPhoto);
+    _currentPhoto++;
     
     // Clean up
     RenderTexture.active = null; // added to avoid errors
@@ -217,9 +242,6 @@ public class Player : MonoBehaviour
     _takingPhoto = false;
     ReturnFlashLightInput();
     Debug.Log("Valid photo: " + _isValidPhoto);
-    
-    if (_currentEnemy)
-      _currentEnemy.GetAttacked(_currentFrequency);
   }
 
   public void SetCanWalk(bool isPossible)
@@ -326,5 +348,42 @@ public class Player : MonoBehaviour
       frequencyTxt.text = _currentEnemy.GetFrequency() + " Hz";
       idMeter.transform.parent.gameObject.SetActive(false);
     }
+  }
+
+  public Photo GetPhoto(int index)
+  {
+    index = Mathf.Clamp(index, 0, MAX_PHOTOS - 1);
+    return _photos[index];
+  }
+
+  public string GetPhotoStorageString()
+  {
+    return "Storage: " + (_currentPhoto) + " / " + MAX_PHOTOS;
+  }
+
+  public int GetPhotographedMonstersAmount()
+  {
+    return _photographedMonsters;
+  }
+}
+
+public class Photo
+{
+  public Photo(Sprite _sprite, bool _valid)
+  {
+    _image = _sprite;
+    _isValid = _valid;
+  }
+    
+  private Sprite _image;
+  public Sprite Image
+  {
+    get { return _image; }
+  }
+  private bool _isValid;
+
+  public bool IsValid
+  {
+    get { return _isValid; }
   }
 }

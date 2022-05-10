@@ -17,14 +17,14 @@ public class ArduinoButton : MonoBehaviour
     [SerializeField] private Color selectedColor = Color.white;
     private InputComponent _inputComponent;
     private Image _image;
-    private EventSystem _eventSystem;
+    private ArdityEventSystem _eventSystem;
     
     // Start is called before the first frame update
     void Start()
     {
         _image = this.GetComponent<Image>();
         _inputComponent = GameObject.FindObjectOfType<InputComponent>();
-        _eventSystem = GameObject.FindObjectOfType<EventSystem>();
+        _eventSystem = GameObject.FindObjectOfType<ArdityEventSystem>();
 
         _inputComponent.ButtonClick += Click;
     }
@@ -33,18 +33,18 @@ public class ArduinoButton : MonoBehaviour
     {
         if (_inputComponent.GetFrequency() >= selectionRange.x && _inputComponent.GetFrequency() <= selectionRange.y)
         {
-            if (_eventSystem.currentSelectedGameObject == this.gameObject)
+            if (_eventSystem.CurrentSelectedObj == this.gameObject)
                 return;
             
-            _eventSystem.SetSelectedGameObject(this.gameObject);
+            _eventSystem.CurrentSelectedObj = this.gameObject;
             Debug.Log(name + "Button selected");
             SetButtonColor(selectedColor);
         }
         else
         {
-            if (_eventSystem.currentSelectedGameObject == this.gameObject)
+            if (_eventSystem.CurrentSelectedObj == this.gameObject)
             {
-                _eventSystem.SetSelectedGameObject(null);
+                _eventSystem.CurrentSelectedObj = null;
                 Debug.Log(name + "Button deselected");
             }
             SetButtonColor(normalColor);
@@ -53,10 +53,10 @@ public class ArduinoButton : MonoBehaviour
 
     void Click()
     {
-        if (_eventSystem.currentSelectedGameObject != this.gameObject)
+        if (_eventSystem.CurrentSelectedObj != this.gameObject)
             return;
         
-        _eventSystem.SetSelectedGameObject(null);
+        _eventSystem.CurrentSelectedObj = null;
         onClick?.Invoke();
         Debug.Log("Clicked on " + name);
     }

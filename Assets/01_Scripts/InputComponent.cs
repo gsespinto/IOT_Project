@@ -16,6 +16,7 @@ public class InputComponent : MonoBehaviour
   
   private bool _lightInput = false;
   private float _lastFreqInput = 0;
+  private float _currentFreqInput = 0;
   private bool _currentButtonInput = false;
   private bool _lastButtonInput = false;
 
@@ -39,6 +40,7 @@ public class InputComponent : MonoBehaviour
     TickFlashLightTimer();
     HandleLightEvents();
     HandleButtonEvent();
+    HandleFrequencyEvent();
   }
   
   // Invoked when a line of data is received from the serial device.
@@ -46,12 +48,17 @@ public class InputComponent : MonoBehaviour
   {
     if (msg.Substring(0, 4) == "FREQ")
     {
-      _lastFreqInput = int.Parse(msg.Substring(5, msg.Length - 5));
-      FrequencyEvent?.Invoke((int)_lastFreqInput);
+      _currentFreqInput = int.Parse(msg.Substring(5, msg.Length - 5));
       return;
     }
     
     if (msg.Substring(0, 4) == "LIGH")
+    {
+      _lightInput = int.Parse(msg.Substring(5, msg.Length - 5)) == 1;
+      return;
+    }
+    
+    if (msg.Substring(0, 4) == "BUTT")
     {
       _currentButtonInput = int.Parse(msg.Substring(5, msg.Length - 5)) == 1;
       return;
@@ -142,5 +149,14 @@ public class InputComponent : MonoBehaviour
   public int GetFrequency()
   {
     return (int)_lastFreqInput;
+  }
+
+  void HandleFrequencyEvent()
+  {
+    if ((int)_currentFreqInput == (int)_lastFreqInput)
+      return;
+    
+    FrequencyEvent?.Invoke((int)_currentFreqInput);
+    _lastFreqInput = _currentFreqInput;
   }
 }

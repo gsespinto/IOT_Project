@@ -1,27 +1,43 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 [RequireComponent(typeof(InputComponent))]
 [RequireComponent(typeof(Player))]
 public class MenuManager : MonoBehaviour
 {
-    private InputComponent _inputComponent;
+    private bool _gamePaused = true;
+    [Header("COMPONENTS")]
     [SerializeField] private Animator playerAnimator;
+    private InputComponent _inputComponent;
+    private Player _player;
+    [SerializeField] private Image photoImage;
+    [SerializeField] private Image photoValidationImage;
+    [SerializeField] private TextMeshProUGUI photoStorageText;
+    [SerializeField] private TextMeshProUGUI selectedPhotoText;
+    [SerializeField] private TextMeshProUGUI scoreText;
+    [Header("TABS")]
     [SerializeField] private GameObject root;
     [SerializeField] private GameObject mainTab;
     [SerializeField] private GameObject pauseTab;
-    private Player _player;
-    private bool _gamePaused = true;
+    [Header("SPRITES")]
+    [SerializeField] private Sprite missingPhotoSprite;
+    [SerializeField] private Sprite validPhotoSprite;
+    [SerializeField] private Sprite invalidPhotoSprite;
 
     private void Start()
     {
         _inputComponent = this.GetComponent<InputComponent>();
         _inputComponent.ButtonClick += PauseInput;
+        _inputComponent.FrequencyEvent += UpdatePhotoToFrequency;
 
         _player = this.GetComponent<Player>();
+        _player.OnValidPhoto += UpdateScoreText;
         
+        UpdateScoreText();
         GoToMainTab();
     }
 
@@ -68,6 +84,8 @@ public class MenuManager : MonoBehaviour
     {
         Time.timeScale = 0;
         _gamePaused = true;
+        UpdatePhotoToFrequency(_inputComponent.GetFrequency());
+        photoStorageText.text = _player.GetPhotoStorageString();
     }
 
     public void UnpauseGame()
@@ -76,5 +94,33 @@ public class MenuManager : MonoBehaviour
         _gamePaused = false;
         _player.ReturnFlashLightInput();
         GoToGameTab();
+    }
+
+    void UpdatePhotoToFrequency(int freq)
+    {
+        if (!_gamePaused)
+            return;
+        
+        SetPhotoImage(_player.GetPhoto(freq));
+        selectedPhotoText.text = (freq + 1).ToString();
+    }
+    
+    void SetPhotoImage(Photo photo)
+    {
+        if (photo == null)
+        {
+            photoImage.sprite = missingPhotoSprite;
+            photoValidationImage.gameObject.SetActive(false);
+            return;
+        }
+
+        photoValidationImage.sprite = photo.IsValid ? validPhotoSprite : invalidPhotoSprite;
+        photoValidationImage.gameObject.SetActive(true);
+        photoImage.sprite = photo.Image;
+    }
+
+    void UpdateScoreText()
+    {
+        scoreText.text = "x" + _player.GetPhotographedMonstersAmount();
     }
 }

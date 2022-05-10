@@ -15,7 +15,7 @@ public class Enemy : MonoBehaviour
     [SerializeField] private float attackRange = 2.0f;
     [SerializeField] private float attackDamage = 25.0f;
     [SerializeField] private float attackTimer = 2.0f;
-    [SerializeField, Range(0, 1000)] private int frequency = 50;
+    [SerializeField, Range(0, 20)] private int frequency = 20;
     private float _currentAttackTimer;
     private bool _attacking = false;
     [SerializeField] private float idTime = 1.0f;
