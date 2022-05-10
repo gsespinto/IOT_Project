@@ -5,6 +5,7 @@ using System.IO;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.UI;
+using TMPro;
 
 [RequireComponent(typeof(InputComponent))]
 [RequireComponent(typeof(HealthComponent))]
@@ -32,6 +33,8 @@ public class Player : MonoBehaviour
   [SerializeField] private Animator lightUIAnimator;
   [SerializeField] private Animator cameraFlashAnimator;
   [SerializeField] private AnimatorEvents cameraFlashEvents;
+  [SerializeField] private Animator hudAnimator;
+  private bool _hasTriggeredId = false;
   
   [Header("DISH"), Space(SPACE)]
   [SerializeField] private Transform dishRoot;
@@ -43,12 +46,18 @@ public class Player : MonoBehaviour
   [Header("UI"), Space(SPACE)]
   [SerializeField] private Image healthOverlay;
   [SerializeField] private RectTransform idRect;
-  [SerializeField] private float idMinDistance = 2.0f;
+  [SerializeField] private Image idMeter;
+  [SerializeField] private TextMeshProUGUI frequencyTxt;
   
   [Header("PHOTO"), Space(SPACE)]
   private Texture2D photoTex = null;
   [SerializeField] private Camera photoCamera;
   [SerializeField] private RenderTexture photoRenderTexture;
+  [SerializeField] private float validPhotoDistance = 10.0f;
+  private float _currentIdTime = 0.0f;
+  private float _currentFrequency = 0.0f;
+  private bool _isValidPhoto = false;
+  private float _initialDetectDistance;
   
   // Start is called before the first frame update
   void Start()
@@ -60,6 +69,9 @@ public class Player : MonoBehaviour
     _inputComponent.FlashLightEvent += HandleFlashLightInput;
     _inputComponent.MovementEvent += HandleMovement;
     _inputComponent.PhotoEvent += TriggerPhoto;
+    _inputComponent.FrequencyEvent += HandleFrequencyInput;
+
+    _healthComponent.OnUpdatedHP += UpdateHpVisuals;
     
     HandleFlashLightInput(false);
     HandleMovement(false);
@@ -123,7 +135,7 @@ public class Player : MonoBehaviour
       return;
     }
 
-    modelAnimator.SetFloat("Speed", _agentComponent.velocity.magnitude / _agentComponent.speed);
+    modelAnimator.SetFloat("Speed", (_agentComponent.velocity.magnitude / _agentComponent.speed));
   }
 
   void HandleFlashLightInput(bool isOn)
@@ -136,14 +148,30 @@ public class Player : MonoBehaviour
     ToggleFlashLight(_hasLightInput);
   }
 
+  void HandleFrequencyInput(int input)
+  {
+    if (_currentFrequency == input)
+      return;
+    _currentFrequency = input; // Mathf.Clamp(_currentFrequency + input, 0.0f, 1000.0f);
+    // Debug.Log("Current frequency: " + (int)_currentFrequency);
+  }
+
   void ToggleFlashLight(bool isOn)
   {
+    if (Time.timeScale == 0)
+      return;
+    
     flashLightObj.SetActive(isOn);
     
     if (lightUIAnimator)
       lightUIAnimator.SetBool("IsLightOn", isOn);
   }
-  
+
+  public void ReturnFlashLightInput()
+  {
+    ToggleFlashLight(_hasLightInput);
+  }
+
   void HandleMovement(bool canMove)
   {
     _agentComponent.isStopped = !canMove || !_canWalk;
@@ -187,7 +215,11 @@ public class Player : MonoBehaviour
     Debug.Log(dirPath);
     
     _takingPhoto = false;
-    ToggleFlashLight(_hasLightInput);
+    ReturnFlashLightInput();
+    Debug.Log("Valid photo: " + _isValidPhoto);
+    
+    if (_currentEnemy)
+      _currentEnemy.GetAttacked(_currentFrequency);
   }
 
   public void SetCanWalk(bool isPossible)
@@ -204,7 +236,10 @@ public class Player : MonoBehaviour
   public void ChangeHP(float amount)
   {
     _healthComponent.ChangeHP(amount);
+  }
 
+  void UpdateHpVisuals()
+  {
     Color c = healthOverlay.color;
     c.a = 1 - _healthComponent.HealthRatio();
     healthOverlay.color = c;
@@ -233,7 +268,7 @@ public class Player : MonoBehaviour
     }
     else
     {
-      Vector3 direction = _currentEnemy.transform.position - dishRoot.transform.position;
+      Vector3 direction = _currentEnemy.GetIdPosition() - dishRoot.transform.position;
       _dishTargetRot = DishLookAtRotation(direction);
     }
 
@@ -249,25 +284,47 @@ public class Player : MonoBehaviour
   public void SetCurrentEnemy(Enemy e)
   {
     _currentEnemy = e;
+    if (_currentEnemy)
+    {
+      _initialDetectDistance = Vector3.Distance(this.transform.position, _currentEnemy.transform.position);
+    }
   }
 
   void IdEnemy()
   {
-    if (!idRect || !photoCamera)
+    if (!idRect || !photoCamera || !hudAnimator)
       return;
 
-    if (!_currentEnemy)
+    if (!_currentEnemy || Vector3.Distance(this.transform.position, _currentEnemy.transform.position) > validPhotoDistance)
     {
-      idRect.gameObject.SetActive(false);
+      hudAnimator.SetBool("ShowID", false);
+      _currentIdTime = 0.0f;
+      frequencyTxt.gameObject.SetActive(false);
+      _isValidPhoto = false;
       return;
     }
-
+    
     Vector2 enemyViewportPos = photoCamera.WorldToViewportPoint(_currentEnemy.GetIdPosition());
     idRect.anchoredPosition = new Vector2(enemyViewportPos.x * photoRenderTexture.width, enemyViewportPos.y * photoRenderTexture.height);
+    hudAnimator.SetBool("ShowID", true);
+   
+    if (!IsLightOn())
+      return;
 
-    float currentScale = idMinDistance / Vector3.Distance(this.transform.position, _currentEnemy.transform.position);
-    idRect.localScale = Vector3.one * currentScale;
-    
-    idRect.gameObject.SetActive(true);
+    _isValidPhoto = true;
+    frequencyTxt.gameObject.SetActive(true);
+      
+    if (_currentIdTime < _currentEnemy.GetIdTime())
+    {
+      idMeter.transform.parent.gameObject.SetActive(true);
+      _currentIdTime += Time.deltaTime;
+      idMeter.fillAmount = _currentIdTime / _currentEnemy.GetIdTime();
+      frequencyTxt.text = "??? Hz";
+    }
+    else
+    {
+      frequencyTxt.text = _currentEnemy.GetFrequency() + " Hz";
+      idMeter.transform.parent.gameObject.SetActive(false);
+    }
   }
 }

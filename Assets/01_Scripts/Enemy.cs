@@ -15,8 +15,11 @@ public class Enemy : MonoBehaviour
     [SerializeField] private float attackRange = 2.0f;
     [SerializeField] private float attackDamage = 25.0f;
     [SerializeField] private float attackTimer = 2.0f;
+    [SerializeField, Range(0, 1000)] private int frequency = 50;
     private float _currentAttackTimer;
     private bool _attacking = false;
+    [SerializeField] private float idTime = 1.0f;
+    private bool isDead = false;
 
     // COMPONENTS
     private Player _player;
@@ -24,6 +27,7 @@ public class Enemy : MonoBehaviour
     [SerializeField] private Animator modelAnimator;
     [SerializeField] private Transform idTrans;
     [SerializeField] private AnimatorEvents animatorEvents;
+    [SerializeField] private GameObject deathVFX;
     
     private void Start()
     {
@@ -85,7 +89,8 @@ public class Enemy : MonoBehaviour
 
     void Move()
     {
-        _agentComponent.isStopped = !_playerIn || !_player.IsLightOn();
+        bool canWalk = isDead || (_playerIn && _player.IsLightOn());
+        _agentComponent.isStopped = !canWalk;
     }
 
     void TickAttackTimer()
@@ -149,5 +154,45 @@ public class Enemy : MonoBehaviour
         }
         
         return idTrans.position;
+    }
+
+    public float GetIdTime()
+    {
+        return idTime;
+    }
+
+    public int GetFrequency()
+    {
+        return frequency;
+    }
+
+    public void GetAttacked(float attackFrequency)
+    {
+        if (attackFrequency != frequency)
+        {
+            Debug.Log("Not using the correct attack frequency!");
+            return;
+        }
+
+        Vector3 targetPos = (this.transform.position + this.transform.forward * -200.0f);
+        _agentComponent.SetDestination(targetPos);
+        
+        _playerIn = false;
+        _player.SetCanWalk(true);
+        _player.SetCurrentEnemy(null);
+        isDead = true;
+        
+        StartCoroutine(KillMonster(5.0f));
+    }
+
+    IEnumerator KillMonster(float killTime)
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(killTime);
+            GameObject.Instantiate(deathVFX, this.transform.position + Vector3.up * _agentComponent.height / 2, this.transform.rotation);
+            Destroy(this.gameObject);
+            yield return null;
+        }
     }
 }
