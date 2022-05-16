@@ -40,7 +40,7 @@ public class AnimatorEvents : MonoBehaviour
   {
     OnAttack?.Invoke();
   }
-  
+
   public void CallPhotoEvent()
   {
     OnTakePhoto?.Invoke();

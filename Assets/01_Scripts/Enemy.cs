@@ -9,9 +9,11 @@ using UnityEngine.AI;
 [RequireComponent(typeof(NavMeshAgent))]
 public class Enemy : MonoBehaviour
 {
+    private const int SPACE = 10;
+    
     private bool _playerIn = false;
     
-    // ATTACK
+    [Header("ATTACK")]
     [SerializeField] private float attackRange = 2.0f;
     [SerializeField] private float attackDamage = 25.0f;
     [SerializeField] private float attackTimer = 2.0f;
@@ -21,12 +23,16 @@ public class Enemy : MonoBehaviour
     [SerializeField] private float idTime = 1.0f;
     private bool isDead = false;
 
-    // COMPONENTS
+    [Space(SPACE)]
+    [Header("COMPONENTS")]
     private Player _player;
     private NavMeshAgent _agentComponent;
+    [SerializeField] private GameObject monsterModel;
+    [SerializeField] private GameObject spiritModel;
     [SerializeField] private Animator modelAnimator;
     [SerializeField] private Transform idTrans;
     [SerializeField] private AnimatorEvents animatorEvents;
+    [SerializeField] private GameObject transformationVFX;
     [SerializeField] private GameObject deathVFX;
     
     private void Start()
@@ -45,6 +51,8 @@ public class Enemy : MonoBehaviour
         {
             animatorEvents.OnAttack += AttackPlayer;
         }
+        
+        ShowMonster(false, false);
     }
 
     private void Update()
@@ -166,6 +174,18 @@ public class Enemy : MonoBehaviour
         return frequency;
     }
 
+    public void ShowMonster(bool show, bool showVFX = true)
+    {
+        if (monsterModel.activeInHierarchy == show)
+            return;
+        
+        monsterModel.SetActive(show);
+        spiritModel.SetActive(!show);
+            
+        if (showVFX)
+            GameObject.Instantiate(transformationVFX, this.transform.position + Vector3.up * _agentComponent.height / 2, this.transform.rotation);
+    }
+
     public void GetAttacked(float attackFrequency)
     {
         if (attackFrequency != frequency)
@@ -181,6 +201,7 @@ public class Enemy : MonoBehaviour
         _player.SetCanWalk(true);
         _player.SetCurrentEnemy(null);
         isDead = true;
+        ShowMonster(false);
         
         StartCoroutine(KillMonster(5.0f));
     }

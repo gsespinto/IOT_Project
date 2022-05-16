@@ -25,12 +25,23 @@ public class Player : MonoBehaviour
   private InputComponent _inputComponent;
   private HealthComponent _healthComponent;
 
-  [Header("MOVEMENT"), Space(SPACE)]
+  [Space(SPACE)]
+  [Header("GAME")] 
+  [SerializeField] private float levelTimer = 120.0f;
+  private float _currentLevelTimer;
+  public StringDelegate OnGameOver;
+  [SerializeField] private string deathMessage;
+  [SerializeField] private string timerMessage;
+  [SerializeField] private string storageMessage;
+  
+  [Space(SPACE)]
+  [Header("MOVEMENT")]
   [SerializeField] private Transform[] pathPoints;
   private int _currentPathPoint = 0;
   private bool _canWalk = true;
 
-  [Header("ANIMATIONS"), Space(SPACE)]
+  [Space(SPACE)]
+  [Header("ANIMATIONS")]
   [SerializeField] private Animator modelAnimator;
   [SerializeField] private Animator lightUIAnimator;
   [SerializeField] private Animator cameraFlashAnimator;
@@ -38,20 +49,26 @@ public class Player : MonoBehaviour
   [SerializeField] private Animator hudAnimator;
   private bool _hasTriggeredId = false;
   
-  [Header("DISH"), Space(SPACE)]
+  [Space(SPACE)]
+  [Header("UI")]
+  [SerializeField] private Image healthOverlay;
+  [SerializeField] private RectTransform idRect;
+  [SerializeField] private Image idMeter;
+  [SerializeField] private TextMeshProUGUI frequencyTxt;
+  [SerializeField] private Image bateryFill;
+  [SerializeField] private FBateryColor[] bateryColors;
+  [SerializeField] private TextMeshProUGUI bateryText;
+  
+  [Space(SPACE)]
+  [Header("DISH")]
   [SerializeField] private Transform dishRoot;
   [SerializeField] private float dishDamping = 3.0f;
   [SerializeField] private Vector2 dishWaitRange = new Vector2(1.0f, 2.0f);
   private float _dishCurrentWaitTime;
   private Quaternion _dishTargetRot;
   
-  [Header("UI"), Space(SPACE)]
-  [SerializeField] private Image healthOverlay;
-  [SerializeField] private RectTransform idRect;
-  [SerializeField] private Image idMeter;
-  [SerializeField] private TextMeshProUGUI frequencyTxt;
-  
-  [Header("PHOTO"), Space(SPACE)]
+  [Space(SPACE)]
+  [Header("PHOTO")]
   private Texture2D photoTex = null;
   [SerializeField] private Camera photoCamera;
   [SerializeField] private RenderTexture photoRenderTexture;
@@ -59,16 +76,16 @@ public class Player : MonoBehaviour
   private float _currentIdTime = 0.0f;
   private float _currentFrequency = 0.0f;
   private bool _isValidPhoto = false;
-  private float _initialDetectDistance;
   private string _currentPlaySession;
   private int _currentPhoto = 0;
   private Photo[] _photos = new Photo[MAX_PHOTOS];
   private Enemy _lastPhotographedEnemy;
   private int _photographedMonsters = 0;
+  public NoParamsDelegate OnPhoto;
   public NoParamsDelegate OnValidPhoto;
   
   // Start is called before the first frame update
-  void Start()
+  void Awake()
   {
     _currentPlaySession = System.DateTime.Now.ToString();
     _currentPlaySession = _currentPlaySession.Replace("/", "_");
@@ -84,6 +101,7 @@ public class Player : MonoBehaviour
     _inputComponent.FrequencyEvent += HandleFrequencyInput;
 
     _healthComponent.OnUpdatedHP += UpdateHpVisuals;
+    _healthComponent.OnDeath += GameOverByDeath;
     
     HandleFlashLightInput(false);
     HandleMovement(false);
@@ -101,6 +119,8 @@ public class Player : MonoBehaviour
     {
       Debug.LogWarning("Missing camera flash events reference!", this);
     }
+
+    _currentLevelTimer = levelTimer;
   }
 
   // Update is called once per frame
@@ -110,6 +130,7 @@ public class Player : MonoBehaviour
     AnimatorHandler();
     PointDishAtEnemy();
     IdEnemy();
+    TickLevelTimer();
   }
 
   // ReSharper disable Unity.PerformanceAnalysis
@@ -203,6 +224,12 @@ public class Player : MonoBehaviour
 
   void TakePhoto()
   {
+    if (_currentPhoto > MAX_PHOTOS)
+    {
+      OnGameOver?.Invoke(storageMessage);
+      return;
+    }
+    
     if (_currentEnemy)
     {
       if (_lastPhotographedEnemy != _currentEnemy && _isValidPhoto)
@@ -222,14 +249,15 @@ public class Player : MonoBehaviour
     photoTex.ReadPixels(photoRect, 0, 0);
     photoTex.Apply();
 
-    //then Save To Disk as PNG
+    /*//then Save To Disk as PNG
     byte[] bytes = photoTex.EncodeToPNG();
     var dirPath = Application.dataPath + "/../SaveImages/" + _currentPlaySession + "/";
     if(!Directory.Exists(dirPath)) {
       Directory.CreateDirectory(dirPath);
     }
-    
     File.WriteAllBytes(dirPath + _currentPhoto + ".png", bytes);
+    Debug.Log(dirPath);*/
+    
     _photos[_currentPhoto] = new Photo(Sprite.Create(photoTex, photoRect,new Vector2(0,0),1), _isValidPhoto);
     _currentPhoto++;
     
@@ -237,11 +265,11 @@ public class Player : MonoBehaviour
     RenderTexture.active = null; // added to avoid errors
     
     Debug.Log("Took photo!");
-    Debug.Log(dirPath);
     
     _takingPhoto = false;
     ReturnFlashLightInput();
     Debug.Log("Valid photo: " + _isValidPhoto);
+    OnPhoto?.Invoke();
   }
 
   public void SetCanWalk(bool isPossible)
@@ -306,10 +334,6 @@ public class Player : MonoBehaviour
   public void SetCurrentEnemy(Enemy e)
   {
     _currentEnemy = e;
-    if (_currentEnemy)
-    {
-      _initialDetectDistance = Vector3.Distance(this.transform.position, _currentEnemy.transform.position);
-    }
   }
 
   void IdEnemy()
@@ -329,6 +353,7 @@ public class Player : MonoBehaviour
     Vector2 enemyViewportPos = photoCamera.WorldToViewportPoint(_currentEnemy.GetIdPosition());
     idRect.anchoredPosition = new Vector2(enemyViewportPos.x * photoRenderTexture.width, enemyViewportPos.y * photoRenderTexture.height);
     hudAnimator.SetBool("ShowID", true);
+    _currentEnemy.ShowMonster(true);
    
     if (!IsLightOn())
       return;
@@ -358,12 +383,75 @@ public class Player : MonoBehaviour
 
   public string GetPhotoStorageString()
   {
-    return "Storage: " + (_currentPhoto) + " / " + MAX_PHOTOS;
+    return (_currentPhoto) + " / " + MAX_PHOTOS;
   }
 
   public int GetPhotographedMonstersAmount()
   {
     return _photographedMonsters;
+  }
+
+  public float GetFreqRatio()
+  {
+    return _currentFrequency / MAX_PHOTOS;
+  }
+
+  void TickLevelTimer()
+  {
+    if (_currentLevelTimer <= 0.0f && Time.deltaTime > 0)
+    {
+      OnGameOver?.Invoke(timerMessage);
+      return;
+    }
+    
+    _currentLevelTimer -= Time.deltaTime;
+
+    float percentage = _currentLevelTimer / levelTimer;
+    bateryFill.fillAmount = percentage;
+    
+    bateryText.text = (int)(percentage * 100) + "%";
+    
+    if (bateryColors.Length < 1)
+      return;
+
+    if (percentage <= bateryColors[bateryColors.Length - 1].bateryPercentage)
+    {
+      bateryFill.color = bateryColors[bateryColors.Length - 1].color;
+      return;
+    }
+    
+    FBateryColor targetColor = bateryColors[0];
+    FBateryColor currentColor = bateryColors[1];
+
+    for (int i = 0; i < bateryColors.Length - 1; i++)
+    {
+      if (percentage <= bateryColors[i].bateryPercentage && percentage > bateryColors[i + 1].bateryPercentage)
+      {
+        currentColor = bateryColors[i];
+        targetColor = bateryColors[i + 1];
+        break;
+      }
+    }
+
+    float mappedPercentage = MyMath.Map(percentage, targetColor.bateryPercentage, currentColor.bateryPercentage, 0, 1);
+    float lerp = 1 - mappedPercentage;
+    Color c = Color.Lerp(currentColor.color, targetColor.color, lerp);
+    bateryFill.color = c;
+  }
+
+  void GameOverByDeath()
+  {
+    OnGameOver?.Invoke(deathMessage);
+  }
+  
+  void GameOverByTimer()
+  {
+    OnGameOver?.Invoke(timerMessage);
+  }
+  
+  void GameOverByStorage()
+  {
+    OnGameOver?.Invoke(storageMessage);
   }
 }
 

@@ -70,9 +70,8 @@ public class InputComponent : MonoBehaviour
     if (!simulateFreqInput)
       return;
 
-    _lastFreqInput += Input.mouseScrollDelta.y;
-    _lastFreqInput = Mathf.Clamp(_lastFreqInput, 0, 50);
-    FrequencyEvent?.Invoke((int)_lastFreqInput);
+    _currentFreqInput += Input.mouseScrollDelta.y;
+    _currentFreqInput = Mathf.Clamp(_currentFreqInput, 0, 20);
   }
 
   void SimulateButton()

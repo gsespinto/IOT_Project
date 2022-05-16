@@ -9,12 +9,20 @@ using UnityEngine.UI;
 [RequireComponent(typeof(Image))]
 public class ArduinoButton : MonoBehaviour
 {
-    [SerializeField]
-    public ButtonEvent onClick;
+    [Header("EVENTS")]
+    [SerializeField] public ButtonEvent onSelected;
+    [SerializeField] public ButtonEvent onClick;
     [Space(10)]
+    [Header("BUTTON")]
     [SerializeField] private Vector2 selectionRange;
     [SerializeField] private Color normalColor = Color.gray;
     [SerializeField] private Color selectedColor = Color.white;
+    [SerializeField] private AudioClip clickSFX;
+    [SerializeField] private AudioClip selectSFX;
+
+    [Space(10)]
+    [Header("COMPONENTS")]
+    [SerializeField] private AudioSource audioSource;
     private InputComponent _inputComponent;
     private Image _image;
     private ArdityEventSystem _eventSystem;
@@ -23,10 +31,14 @@ public class ArduinoButton : MonoBehaviour
     void Start()
     {
         _image = this.GetComponent<Image>();
+        
         _inputComponent = GameObject.FindObjectOfType<InputComponent>();
         _eventSystem = GameObject.FindObjectOfType<ArdityEventSystem>();
 
         _inputComponent.ButtonClick += Click;
+
+        onClick.AddListener(PlayClickSFX);
+        onSelected.AddListener(PlaySelectSFX);
     }
 
     private void Update()
@@ -37,8 +49,8 @@ public class ArduinoButton : MonoBehaviour
                 return;
             
             _eventSystem.CurrentSelectedObj = this.gameObject;
-            Debug.Log(name + "Button selected");
             SetButtonColor(selectedColor);
+            onSelected?.Invoke();
         }
         else
         {
@@ -64,6 +76,16 @@ public class ArduinoButton : MonoBehaviour
     void SetButtonColor(Color c)
     {
         _image.color = c;
+    }
+
+    void PlayClickSFX()
+    {
+        audioSource.PlayOneShot(clickSFX);
+    }
+    
+    void PlaySelectSFX()
+    {
+        audioSource.PlayOneShot(selectSFX);
     }
 }
 
