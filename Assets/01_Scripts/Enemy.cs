@@ -17,12 +17,14 @@ public class Enemy : MonoBehaviour
     [SerializeField] private float attackRange = 2.0f;
     [SerializeField] private float attackDamage = 25.0f;
     [SerializeField] private float attackTimer = 2.0f;
-    [SerializeField, Range(0, 20)] private int frequency = 20;
+    [SerializeField, Range(0, 19)] private int frequency = 20;
+    [SerializeField] private string name = "";
     private float _currentAttackTimer;
     private bool _attacking = false;
     [SerializeField] private float idTime = 1.0f;
     private bool isDead = false;
-
+    private Vector3 deathPos;
+    
     [Space(SPACE)]
     [Header("COMPONENTS")]
     private Player _player;
@@ -53,6 +55,7 @@ public class Enemy : MonoBehaviour
         }
         
         ShowMonster(false, false);
+        animatorEvents.OnBuzz += Buzz;
     }
 
     private void Update()
@@ -164,14 +167,19 @@ public class Enemy : MonoBehaviour
         return idTrans.position;
     }
 
-    public float GetIdTime()
+    public float IdTime
     {
-        return idTime;
+        get { return idTime; }
     }
 
-    public int GetFrequency()
+    public int Frequency
     {
-        return frequency;
+        get { return frequency; }
+    }
+    
+    public string Name
+    {
+        get { return name; }
     }
 
     public void ShowMonster(bool show, bool showVFX = true)
@@ -181,9 +189,12 @@ public class Enemy : MonoBehaviour
         
         monsterModel.SetActive(show);
         spiritModel.SetActive(!show);
-            
+
         if (showVFX)
+        {
             GameObject.Instantiate(transformationVFX, this.transform.position + Vector3.up * _agentComponent.height / 2, this.transform.rotation);
+            _player.inputComponent.Buzz(20);
+        }
     }
 
     public void GetAttacked(float attackFrequency)
@@ -194,7 +205,7 @@ public class Enemy : MonoBehaviour
             return;
         }
 
-        Vector3 targetPos = (this.transform.position + this.transform.forward * -200.0f);
+        Vector3 targetPos = deathPos;
         _agentComponent.SetDestination(targetPos);
         
         _playerIn = false;
@@ -215,5 +226,15 @@ public class Enemy : MonoBehaviour
             Destroy(this.gameObject);
             yield return null;
         }
+    }
+
+    public void SetDeathPos(Vector3 pos)
+    {
+        deathPos = pos;
+    }
+
+    void Buzz()
+    {
+        _player.inputComponent.Buzz(frequency);
     }
 }

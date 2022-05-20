@@ -28,7 +28,15 @@ public class InputComponent : MonoBehaviour
   public NoParamsDelegate PhotoEvent;
   public IntDelegate FrequencyEvent; 
   public NoParamsDelegate ButtonClick;
+  public NoParamsDelegate ButtonUp;
 
+  private void Awake()
+  {
+    if (GameObject.FindObjectsOfType<InputComponent>().Length > 1)
+      Destroy(this.gameObject);
+    
+    DontDestroyOnLoad(this.gameObject);
+  }
 
   // Update is called once per frame
   void Update()
@@ -46,19 +54,19 @@ public class InputComponent : MonoBehaviour
   // Invoked when a line of data is received from the serial device.
   void OnMessageArrived(string msg)
   {
-    if (msg.Substring(0, 4) == "FREQ")
+    if (!simulateFreqInput && msg.Substring(0, 4) == "FREQ")
     {
       _currentFreqInput = int.Parse(msg.Substring(5, msg.Length - 5));
       return;
     }
     
-    if (msg.Substring(0, 4) == "LIGH")
+    if (!simulateLightInput && msg.Substring(0, 4) == "LIGH")
     {
       _lightInput = int.Parse(msg.Substring(5, msg.Length - 5)) == 1;
       return;
     }
     
-    if (msg.Substring(0, 4) == "BUTT")
+    if (!simulateButtonInput && msg.Substring(0, 4) == "BUTT")
     {
       _currentButtonInput = int.Parse(msg.Substring(5, msg.Length - 5)) == 1;
       return;
@@ -71,7 +79,7 @@ public class InputComponent : MonoBehaviour
       return;
 
     _currentFreqInput += Input.mouseScrollDelta.y;
-    _currentFreqInput = Mathf.Clamp(_currentFreqInput, 0, 20);
+    _currentFreqInput = Mathf.Clamp(_currentFreqInput, 0, 19);
   }
 
   void SimulateButton()
@@ -79,7 +87,7 @@ public class InputComponent : MonoBehaviour
     if (!simulateButtonInput)
       return;
     
-    _currentButtonInput = Input.GetKeyDown(KeyCode.Mouse1) || Input.GetKeyDown(KeyCode.D);
+    _currentButtonInput = Input.GetKey(KeyCode.Mouse1) || Input.GetKey(KeyCode.D);
   }
 
   void SimulateFlashLight()
@@ -141,6 +149,10 @@ public class InputComponent : MonoBehaviour
     {
       ButtonClick?.Invoke();
     }
+    else
+    {
+      ButtonUp?.Invoke();
+    }
 
     _lastButtonInput = _currentButtonInput;
   }
@@ -157,5 +169,10 @@ public class InputComponent : MonoBehaviour
     
     FrequencyEvent?.Invoke((int)_currentFreqInput);
     _lastFreqInput = _currentFreqInput;
+  }
+
+  public void Buzz(int note)
+  {
+    ardityController.SendSerialMessage("BUZZ " + note);
   }
 }

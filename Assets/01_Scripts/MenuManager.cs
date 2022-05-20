@@ -4,13 +4,14 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Audio;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-[RequireComponent(typeof(InputComponent))]
 [RequireComponent(typeof(Player))]
 public class MenuManager : MonoBehaviour
 {
     private bool _gamePaused = true;
+    private bool _gameEnded = false;
     private const int SPACE = 10;
     
     
@@ -18,16 +19,18 @@ public class MenuManager : MonoBehaviour
     [SerializeField] private AudioMixer mixer;
     [SerializeField] private Animator playerAnimator;
     [SerializeField] private AudioSource audioPreview;
-    private InputComponent _inputComponent;
-    private Player _player;
-    [SerializeField] private Image photoImage;
-    [SerializeField] private Image photoValidationImage;
+    [SerializeField] private Image[] photoImages;
+    [SerializeField] private Image[] photoValidationImages;
+    [SerializeField] private TextMeshProUGUI[] selectedPhotoText;
     [SerializeField] private TextMeshProUGUI photoStorageText;
-    [SerializeField] private TextMeshProUGUI selectedPhotoText;
     [SerializeField] private TextMeshProUGUI scoreText;
     [SerializeField] private Image[] volumeSliders;
     [SerializeField] private Image volumeImage;
     [SerializeField] private Image mutedImage;
+    [SerializeField] private TextMeshProUGUI startHighScoreText;
+    private Player _player;
+    private GameManager _gameManager;
+    private InputComponent _inputComponent;
     
     [Space(SPACE)]
     [Header("TABS")]
@@ -45,18 +48,24 @@ public class MenuManager : MonoBehaviour
 
     [Space(SPACE)] [Header("GAME OVER")] 
     [SerializeField] private TextMeshProUGUI reasonText;
+    [SerializeField] private TextMeshProUGUI finalScoreText;
+    [SerializeField] private TextMeshProUGUI highScoreText;
+    [SerializeField] private GameObject newHighScoreObj;
 
     private void Start()
     {
-        _inputComponent = this.GetComponent<InputComponent>();
-        _inputComponent.ButtonClick += PauseInput;
-        _inputComponent.FrequencyEvent += UpdatePhotoToFrequency;
-        _inputComponent.FrequencyEvent += UpdateVolume;
-
         _player = this.GetComponent<Player>();
         _player.OnValidPhoto += UpdateScoreText;
         _player.OnPhoto += UpdateStorageText;
         _player.OnGameOver += GameOver;
+
+        _inputComponent = GameObject.FindObjectOfType<InputComponent>();
+        _inputComponent.ButtonClick += PauseInput;
+        _inputComponent.FrequencyEvent += UpdatePhotoToFrequency;
+        _inputComponent.FrequencyEvent += UpdateVolume;
+        
+        _gameManager = GameObject.FindObjectOfType<GameManager>();
+        startHighScoreText.text = "x" + _gameManager.HighScore;
         
         UpdateScoreText();
         UpdateStorageText();
@@ -133,21 +142,33 @@ public class MenuManager : MonoBehaviour
             return;
         
         SetPhotoImage(_player.GetPhoto(freq));
-        selectedPhotoText.text = (freq + 1).ToString();
+        foreach (TextMeshProUGUI spt in selectedPhotoText)
+        {
+            spt.text = (freq + 1).ToString();
+        }
     }
     
     void SetPhotoImage(Photo photo)
     {
         if (photo == null)
         {
-            photoImage.sprite = missingPhotoSprite;
-            photoValidationImage.gameObject.SetActive(false);
+            foreach (Image pi in photoImages)
+                pi.sprite = missingPhotoSprite;
+            
+            foreach (Image pv in photoValidationImages)
+                pv.gameObject.SetActive(false);
+            
             return;
         }
 
-        photoValidationImage.sprite = photo.IsValid ? validPhotoSprite : invalidPhotoSprite;
-        photoValidationImage.gameObject.SetActive(true);
-        photoImage.sprite = photo.Image;
+        foreach (Image pv in photoValidationImages)
+        {
+            pv.sprite = photo.IsValid ? validPhotoSprite : invalidPhotoSprite;
+            pv.gameObject.SetActive(true); 
+        }
+
+        foreach (Image pi in photoImages)
+            pi.sprite = photo.Image;
     }
 
     void UpdateScoreText()
@@ -196,8 +217,24 @@ public class MenuManager : MonoBehaviour
 
     void GameOver(string reason)
     {
+        if (_gameEnded)
+            return;
+        
         reasonText.text = reason;
+        bool isNewHighScore = _gameManager.TryToSetHighScore(_player.GetPhotographedMonstersAmount());
+        Debug.Log("Is new highScore: " + isNewHighScore);
+        newHighScoreObj.SetActive(isNewHighScore);
+        finalScoreText.text = "x" + _player.GetPhotographedMonstersAmount();
+        highScoreText.text = "x" + _gameManager.HighScore;
+        
         TriggerPauseGame(true);
         GoToGameOverTab();
+
+        _gameEnded = true;
+    }
+
+    public void RestartGame()
+    {
+        LoadingManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 }

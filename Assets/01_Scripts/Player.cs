@@ -8,7 +8,6 @@ using UnityEngine.AI;
 using UnityEngine.UI;
 using TMPro;
 
-[RequireComponent(typeof(InputComponent))]
 [RequireComponent(typeof(HealthComponent))]
 public class Player : MonoBehaviour
 {
@@ -22,7 +21,7 @@ public class Player : MonoBehaviour
   [Header("COMPONENTS")]
   [SerializeField] private GameObject flashLightObj;
   private NavMeshAgent _agentComponent;
-  private InputComponent _inputComponent;
+  [HideInInspector] public InputComponent inputComponent;
   private HealthComponent _healthComponent;
 
   [Space(SPACE)]
@@ -51,10 +50,11 @@ public class Player : MonoBehaviour
   
   [Space(SPACE)]
   [Header("UI")]
-  [SerializeField] private Image healthOverlay;
+  [SerializeField] private CanvasGroup healthOverlay;
   [SerializeField] private RectTransform idRect;
   [SerializeField] private Image idMeter;
   [SerializeField] private TextMeshProUGUI frequencyTxt;
+  [SerializeField] private TextMeshProUGUI nameTxt;
   [SerializeField] private Image bateryFill;
   [SerializeField] private FBateryColor[] bateryColors;
   [SerializeField] private TextMeshProUGUI bateryText;
@@ -85,20 +85,20 @@ public class Player : MonoBehaviour
   public NoParamsDelegate OnValidPhoto;
   
   // Start is called before the first frame update
-  void Awake()
+  void Start()
   {
     _currentPlaySession = System.DateTime.Now.ToString();
     _currentPlaySession = _currentPlaySession.Replace("/", "_");
     _currentPlaySession = _currentPlaySession.Replace(":", "_");
     
     _agentComponent = this.GetComponent<NavMeshAgent>();
-    _inputComponent = this.GetComponent<InputComponent>();
+    inputComponent = GameObject.FindObjectOfType<InputComponent>();
     _healthComponent = this.GetComponent<HealthComponent>();
 
-    _inputComponent.FlashLightEvent += HandleFlashLightInput;
-    _inputComponent.MovementEvent += HandleMovement;
-    _inputComponent.PhotoEvent += TriggerPhoto;
-    _inputComponent.FrequencyEvent += HandleFrequencyInput;
+    inputComponent.FlashLightEvent += HandleFlashLightInput;
+    inputComponent.MovementEvent += HandleMovement;
+    inputComponent.PhotoEvent += TriggerPhoto;
+    inputComponent.FrequencyEvent += HandleFrequencyInput;
 
     _healthComponent.OnUpdatedHP += UpdateHpVisuals;
     _healthComponent.OnDeath += GameOverByDeath;
@@ -184,7 +184,7 @@ public class Player : MonoBehaviour
   void HandleFrequencyInput(int input)
   {
     _currentFrequency = input; // Mathf.Clamp(_currentFrequency + input, 0.0f, 1000.0f);
-    Debug.Log("Current frequency: " + (int)_currentFrequency);
+    Debug.Log("Current frequency: " + ((int)_currentFrequency + 1));
   }
 
   void ToggleFlashLight(bool isOn)
@@ -224,12 +224,7 @@ public class Player : MonoBehaviour
 
   void TakePhoto()
   {
-    if (_currentPhoto > MAX_PHOTOS)
-    {
-      OnGameOver?.Invoke(storageMessage);
-      return;
-    }
-    
+   
     if (_currentEnemy)
     {
       if (_lastPhotographedEnemy != _currentEnemy && _isValidPhoto)
@@ -270,6 +265,11 @@ public class Player : MonoBehaviour
     ReturnFlashLightInput();
     Debug.Log("Valid photo: " + _isValidPhoto);
     OnPhoto?.Invoke();
+    
+    if (_currentPhoto >= MAX_PHOTOS)
+    {
+      GameOverByStorage();
+    }
   }
 
   public void SetCanWalk(bool isPossible)
@@ -290,9 +290,7 @@ public class Player : MonoBehaviour
 
   void UpdateHpVisuals()
   {
-    Color c = healthOverlay.color;
-    c.a = 1 - _healthComponent.HealthRatio();
-    healthOverlay.color = c;
+    healthOverlay.alpha = 1 - _healthComponent.HealthRatio();
   }
 
   void PointDishAtEnemy()
@@ -346,6 +344,7 @@ public class Player : MonoBehaviour
       hudAnimator.SetBool("ShowID", false);
       _currentIdTime = 0.0f;
       frequencyTxt.gameObject.SetActive(false);
+      nameTxt.gameObject.SetActive(false);
       _isValidPhoto = false;
       return;
     }
@@ -359,18 +358,21 @@ public class Player : MonoBehaviour
       return;
 
     _isValidPhoto = true;
+    nameTxt.text = _currentEnemy.Name;
+    
     frequencyTxt.gameObject.SetActive(true);
+    nameTxt.gameObject.SetActive(true);
       
-    if (_currentIdTime < _currentEnemy.GetIdTime())
+    if (_currentIdTime < _currentEnemy.IdTime)
     {
       idMeter.transform.parent.gameObject.SetActive(true);
       _currentIdTime += Time.deltaTime;
-      idMeter.fillAmount = _currentIdTime / _currentEnemy.GetIdTime();
-      frequencyTxt.text = "??? Hz";
+      idMeter.fillAmount = _currentIdTime / _currentEnemy.IdTime;
+      frequencyTxt.text = "??? MHz";
     }
     else
     {
-      frequencyTxt.text = _currentEnemy.GetFrequency() + " Hz";
+      frequencyTxt.text = (_currentEnemy.Frequency + 1) + " MHz";
       idMeter.transform.parent.gameObject.SetActive(false);
     }
   }
@@ -393,14 +395,14 @@ public class Player : MonoBehaviour
 
   public float GetFreqRatio()
   {
-    return _currentFrequency / MAX_PHOTOS;
+    return _currentFrequency / (MAX_PHOTOS - 1);
   }
 
   void TickLevelTimer()
   {
     if (_currentLevelTimer <= 0.0f && Time.deltaTime > 0)
     {
-      OnGameOver?.Invoke(timerMessage);
+      GameOverByTimer();
       return;
     }
     

@@ -7,8 +7,10 @@ using IOT_Delegates;
 public class AnimatorEvents : MonoBehaviour
 {
   [SerializeField] private AudioClip[] stepSfxs;
+  [SerializeField] private AudioClip[] specialSfx;
   public NoParamsDelegate OnAttack;
   public NoParamsDelegate OnTakePhoto;
+  public NoParamsDelegate OnBuzz;
 
   // COMPONENTS
   private AudioSource audioSource;
@@ -18,8 +20,21 @@ public class AnimatorEvents : MonoBehaviour
     audioSource = this.GetComponent<AudioSource>();
   }
 
+  public void PlaySpecialSfx(int index)
+  {
+    if (!audioSource)
+    {
+      Debug.LogWarning("Missing audio source reference in " + this.gameObject.name + " AnimatorEvents component.");
+      return;
+    }
+    
+    audioSource.PlayOneShot(specialSfx[index]);
+  }
+  
   public void PlayStepSFX()
   {
+    OnBuzz?.Invoke();
+    
     if (!audioSource)
     {
       Debug.LogWarning("Missing audio source reference in " + this.gameObject.name + " AnimatorEvents component.");
@@ -44,5 +59,10 @@ public class AnimatorEvents : MonoBehaviour
   public void CallPhotoEvent()
   {
     OnTakePhoto?.Invoke();
+  }
+
+  public void Buzz()
+  {
+    OnBuzz?.Invoke();
   }
 }

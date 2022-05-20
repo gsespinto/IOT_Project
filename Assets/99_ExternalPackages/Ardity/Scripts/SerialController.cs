@@ -61,7 +61,7 @@ public class SerialController : MonoBehaviour
     // It creates a new thread that tries to connect to the serial device
     // and start reading from it.
     // ------------------------------------------------------------------------
-    void OnEnable()
+    void Start()
     {
         serialThread = new SerialThreadLines(portName, 
                                              baudRate, 
