@@ -223,6 +223,7 @@ public class Enemy : MonoBehaviour
         {
             yield return new WaitForSeconds(killTime);
             GameObject.Instantiate(deathVFX, this.transform.position + Vector3.up * _agentComponent.height / 2, this.transform.rotation);
+            _player.inputComponent.Buzz(20);
             Destroy(this.gameObject);
             yield return null;
         }
