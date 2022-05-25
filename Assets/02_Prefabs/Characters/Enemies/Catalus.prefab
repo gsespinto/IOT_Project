@@ -115,7 +115,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   attackRange: 3
   attackDamage: 15
-  attackTimer: 2
+  attackTimer: 1.5
   frequency: 6
   name: catalus
   idTime: 6

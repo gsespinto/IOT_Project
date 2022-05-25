@@ -115,7 +115,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   attackRange: 4
   attackDamage: 25
-  attackTimer: 1.5
+  attackTimer: 1
   frequency: 8
   name: coerulus
   idTime: 4

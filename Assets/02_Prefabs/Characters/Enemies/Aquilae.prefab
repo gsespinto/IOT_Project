@@ -115,7 +115,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   attackRange: 4
   attackDamage: 20
-  attackTimer: 2.5
+  attackTimer: 2
   frequency: 2
   name: aquilae
   idTime: 4

@@ -115,7 +115,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   attackRange: 3.5
   attackDamage: 50
-  attackTimer: 4
+  attackTimer: 3
   frequency: 15
   name: nepa
   idTime: 8

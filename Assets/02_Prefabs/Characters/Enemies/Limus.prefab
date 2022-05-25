@@ -115,7 +115,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   attackRange: 4
   attackDamage: 10
-  attackTimer: 1
+  attackTimer: 0.5
   frequency: 12
   name: limus
   idTime: 4

@@ -115,7 +115,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   attackRange: 4
   attackDamage: 7.5
-  attackTimer: 0.5
+  attackTimer: 0.25
   frequency: 13
   name: mus
   idTime: 5

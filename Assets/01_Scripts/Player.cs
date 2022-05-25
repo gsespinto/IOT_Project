@@ -395,7 +395,9 @@ public class Player : MonoBehaviour
 
   public float GetFreqRatio()
   {
-    return _currentFrequency / (MAX_PHOTOS - 1);
+        Debug.Log(_currentFrequency);
+        Debug.Log(MAX_PHOTOS);
+    return (_currentFrequency - 1.0f) / (MAX_PHOTOS - 2.0f);
   }
 
   void TickLevelTimer()

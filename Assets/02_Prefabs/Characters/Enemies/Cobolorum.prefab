@@ -115,7 +115,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   attackRange: 4
   attackDamage: 17.5
-  attackTimer: 1.5
+  attackTimer: 1
   frequency: 7
   name: cobolorum
   idTime: 5

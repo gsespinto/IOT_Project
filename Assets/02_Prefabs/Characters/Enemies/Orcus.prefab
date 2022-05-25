@@ -115,7 +115,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   attackRange: 4
   attackDamage: 25
-  attackTimer: 2
+  attackTimer: 1.5
   frequency: 16
   name: orcus
   idTime: 5

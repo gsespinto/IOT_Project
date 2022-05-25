@@ -25,8 +25,8 @@ public class MenuManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI photoStorageText;
     [SerializeField] private TextMeshProUGUI scoreText;
     [SerializeField] private Image[] volumeSliders;
-    [SerializeField] private Image volumeImage;
-    [SerializeField] private Image mutedImage;
+    [SerializeField] private Image[] volumeImages;
+    [SerializeField] private Image[] mutedImages;
     [SerializeField] private TextMeshProUGUI startHighScoreText;
     private Player _player;
     private GameManager _gameManager;
@@ -195,19 +195,28 @@ public class MenuManager : MonoBehaviour
 
         if (leaveFlag)
             return;
+
+        float freqRatio = (i - 1.0f) / 18.0f;
         
         foreach (Image vs in volumeSliders)
         {
-            vs.fillAmount = _player.GetFreqRatio();
+            vs.fillAmount = freqRatio;
         }
 
         audioPreview.PlayOneShot(audioPreview.clip);
-        volumeImage.gameObject.SetActive(_player.GetFreqRatio() > 0);
-        mutedImage.gameObject.SetActive(_player.GetFreqRatio() <= 0);
 
-        if (_player.GetFreqRatio() > 0)
+        foreach (Image vi in volumeImages)
         {
-            mixer.SetFloat("MasterVolume", MyMath.Map(_player.GetFreqRatio(), 0, 1, -30, 5));
+            vi.gameObject.SetActive(freqRatio > 0);
+        }
+        foreach (Image mi in mutedImages)
+        {
+            mi.gameObject.SetActive(freqRatio <= 0);
+        }
+
+        if (freqRatio > 0)
+        {
+            mixer.SetFloat("MasterVolume", MyMath.Map(freqRatio, 0, 1, -30, 5));
         }
         else
         {

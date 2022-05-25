@@ -115,7 +115,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   attackRange: 4
   attackDamage: 34
-  attackTimer: 3
+  attackTimer: 2.5
   frequency: 5
   name: bos
   idTime: 7

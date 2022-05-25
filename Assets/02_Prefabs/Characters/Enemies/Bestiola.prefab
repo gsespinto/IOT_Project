@@ -115,7 +115,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   attackRange: 4
   attackDamage: 25
-  attackTimer: 2.5
+  attackTimer: 2
   frequency: 4
   name: bestiola
   idTime: 5

@@ -30,14 +30,6 @@ public class InputComponent : MonoBehaviour
   public NoParamsDelegate ButtonClick;
   public NoParamsDelegate ButtonUp;
 
-  private void Awake()
-  {
-    if (GameObject.FindObjectsOfType<InputComponent>().Length > 1)
-      Destroy(this.gameObject);
-    
-    DontDestroyOnLoad(this.gameObject);
-  }
-
   // Update is called once per frame
   void Update()
   {

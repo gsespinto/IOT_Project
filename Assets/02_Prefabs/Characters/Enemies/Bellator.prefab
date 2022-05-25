@@ -115,7 +115,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   attackRange: 3.5
   attackDamage: 15
-  attackTimer: 1.5
+  attackTimer: 1
   frequency: 3
   name: bellator
   idTime: 3

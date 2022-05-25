@@ -115,7 +115,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   attackRange: 4.5
   attackDamage: 12.5
-  attackTimer: 1.5
+  attackTimer: 1
   frequency: 19
   name: varius
   idTime: 6

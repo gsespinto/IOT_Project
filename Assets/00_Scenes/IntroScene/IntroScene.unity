@@ -656,7 +656,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 952647294851191634, guid: 484f62a84b17a624dbc0d6a2236d3592, type: 3}
       propertyPath: m_RootOrder
-      value: 8
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 952647294851191634, guid: 484f62a84b17a624dbc0d6a2236d3592, type: 3}
       propertyPath: m_AnchorMax.x
@@ -1720,8 +1720,8 @@ Transform:
   m_Children:
   - {fileID: 185092058}
   - {fileID: 451899763}
-  - {fileID: 1336729498}
   - {fileID: 1626893975}
+  - {fileID: 1336729498}
   - {fileID: 2117989797}
   - {fileID: 781884308}
   - {fileID: 1540652118}
@@ -3723,6 +3723,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 539483367}
     m_Modifications:
+    - target: {fileID: 2260079262299128889, guid: 57a030f06621a6549b7e4a7f8f9f7237, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4225632224401224490, guid: 57a030f06621a6549b7e4a7f8f9f7237, type: 3}
       propertyPath: m_Name
       value: InputComponent
@@ -3769,6 +3773,18 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4842830312457722793, guid: 57a030f06621a6549b7e4a7f8f9f7237, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6342423977366651017, guid: 57a030f06621a6549b7e4a7f8f9f7237, type: 3}
+      propertyPath: simulateFreqInput
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6342423977366651017, guid: 57a030f06621a6549b7e4a7f8f9f7237, type: 3}
+      propertyPath: simulateLightInput
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6342423977366651017, guid: 57a030f06621a6549b7e4a7f8f9f7237, type: 3}
+      propertyPath: simulateButtonInput
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
@@ -4277,7 +4293,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 952647294851191634, guid: 3d7ce0f5ca14c8246847e5247f5e6486, type: 3}
       propertyPath: m_RootOrder
-      value: 9
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 952647294851191634, guid: 3d7ce0f5ca14c8246847e5247f5e6486, type: 3}
       propertyPath: m_AnchorMax.x
@@ -4541,7 +4557,7 @@ Transform:
   - {fileID: 1045868279}
   - {fileID: 1901297970}
   m_Father: {fileID: 539483367}
-  m_RootOrder: 3
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &1629724561 stripped
 Transform:
