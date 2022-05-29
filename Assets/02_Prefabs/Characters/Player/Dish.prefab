@@ -177,6 +177,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   stepSfxs: []
+  specialSfx:
+  - {fileID: 8300000, guid: 32a5d4066a1192f4e8e0d5a9ccb9fb1d, type: 3}
 --- !u!95 &7476097206833003033
 Animator:
   serializedVersion: 4

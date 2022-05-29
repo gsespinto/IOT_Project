@@ -98,4 +98,4 @@ MonoBehaviour:
   simulateFreqInput: 0
   simulateButtonInput: 0
   ardityController: {fileID: 2260079262299128895}
-  flashLightInputTimer: 0.25
+  flashLightInputTimer: 0.33
